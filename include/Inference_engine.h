@@ -3,6 +3,7 @@
 
 const int MAX_VARIABLES = 10;
 const int MAX_LEN_OF_NAME = 10;
+const int START_LEN_OF_DATA = 10;
 
 struct variables_data_elem {
     bool value;
@@ -12,6 +13,7 @@ struct variables_data_elem {
 struct variables_data {
     variables_data_elem * data;
     size_t len;
+    size_t capacity;
 };
 
 struct table_of_names_element {

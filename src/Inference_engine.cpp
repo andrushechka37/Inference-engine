@@ -6,8 +6,6 @@
 // TOD: система ошибок
 // TODO: переименовать array
 // TODO: все одним сканфом 
-// убрать количество аргументов в начале
-// убрать костыль с ---------
 // проверка на input
 // вместо вычисления генерилка кода а то каждый раз заново работать не будет
 
@@ -27,18 +25,26 @@ void put_name_in_table(table_of_names * table, int number, char * name)
 
 void get_variables(FILE * input, variables_data * variables, table_of_names * table) 
 {
-    fscanf(input, "%zd;", &LEN);
-    table->len = LEN;
-    variables->data = (variables_data_elem *) calloc(LEN, sizeof(variables_data_elem));
+    variables->capacity = START_LEN_OF_DATA;
+    variables->data = (variables_data_elem *) calloc(START_LEN_OF_DATA, sizeof(variables_data_elem));
 
     int value_of_variable = 0;
     char name_of_var[MAX_LEN_OF_NAME] = "";
 
     for (int i = 0; fscanf(input, "%s = %d;", name_of_var, &value_of_variable) != 0; i++) {
 
-        if (strcmp(name_of_var, "------") == 0) {    // REMOVE BAD
+        if (strcmp(name_of_var, "-") == 0) {
             break;
         }
+
+        (table->len)++;
+        (variables->len)++;
+
+        if (variables->len > variables->capacity) {
+            variables->data = (variables_data_elem *) realloc(variables->data, variables->capacity * 2 * sizeof(variables_data_elem));
+            variables->capacity *= 2;
+        }
+
         put_name_in_table(table, i, name_of_var);
         var_elem_ctor(value_of_variable, &(variables->data[i]));
     }
@@ -71,13 +77,11 @@ int main ()
 {
     variables_data variables = {};
     table_of_names table = {};
-
     FILE * input = fopen("input.txt", "r");
     get_variables(input, &variables, &table);
 
-    int i = expression(input, &table, &variables); // read hui
+    engine(input, &table, &variables); 
 
-    printf("\n%d\n", i);
     fclose(input);
 
 
