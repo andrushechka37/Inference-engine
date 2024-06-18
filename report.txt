@@ -1,20 +1,16 @@
-then:
-a = 1
-b = 0
-c = 1
-hui = 0
-the rule workedthe rule workednow:
-a = 0
-b = 0
-c = 0
-hui = 0
-then:
-a = 0
-b = 0
-c = 0
-hui = 0
-now:
-a = 0
-b = 0
-c = 0
-hui = 0
+the rule № 1 worked
+the rule № 2 worked
+a: 1 -> 0
+b: 0 -> 0
+c: 1 -> 0
+hui: 0 -> 0
+
+------------------
+
+a: 0 -> 0
+b: 0 -> 0
+c: 0 -> 0
+hui: 0 -> 0
+
+------------------
+

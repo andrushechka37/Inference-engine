@@ -11,10 +11,11 @@
 // TODO: переименовать array и все вообще
 // проверка на input
 // в таблице имен фиксированное количество
-// заполнять деривейт при токенизации
-
-
-
+// опверка в get var
+// добавить дефайнов
+// freeeee
+// const d snpintf
+// include происходит раньше заполнения его
 static int get_size_of_file(FILE * file);
 static void get_word(buffer * data, char * name);
 
@@ -25,12 +26,12 @@ void var_elem_ctor(bool value, variables_data_elem * elem)
 
 int put_name_in_table(table_of_names * table, int number, char * name) 
 {
-    int i = 0;
-    for (i = 0; i < table->len; i++) {
+    for (int i = 0; i < table->len; i++) {
         if (strcmp(name, table->names_of_var[i].name) == 0) {
             return i;
         }
     }
+
     table->len++;
     strcpy(table->names_of_var[number].name, name); // not safe
     return table->len - 1;
@@ -47,24 +48,24 @@ void read_file_to_buffer(const char file[], buffer * data)
     fclose(pfile);
 }
 
-void create_token(types_of_tokens type, bool value, token * TOKEN) {
+void create_token(types_of_tokens type, bool value, token * token) 
+{
     if (type == number) {
-        TOKEN->value = value;
+        token->value = value;
     }
 
-    TOKEN->type = type;
+    token->type = type;
 }
 
 #define CUR_CHAR data->buffer[data->ip]
-#define CASE_FOR_SYMBOL(symbol, type)                   \
-    case symbol:                                        \
-    create_token(type, 0, &TOKENS->data[token_ip]);     \
+#define CASE_FOR_SYMBOL(symbol, type)                       \
+    case symbol:                                            \
+    create_token(type, 0, &parsed_str->data[parsed_str->ip]);     \
     break;
 
-void parse_str_lexically(buffer * data, table_of_names * table, token_data * TOKENS) 
+void parse_str_lexically(buffer * data, table_of_names * table, token_data * parsed_str) 
 {
-    TOKENS->data = (token *) calloc(data->len, sizeof(token));
-    int token_ip = 0;
+    parsed_str->data = (token *) calloc(data->len, sizeof(token));
 
     while (data->ip < data->len) {
 
@@ -74,9 +75,9 @@ void parse_str_lexically(buffer * data, table_of_names * table, token_data * TOK
 
         } else if (isdigit(CUR_CHAR) != 0) {
             bool value = CUR_CHAR - '0';
-            create_token(number, value, &TOKENS->data[token_ip]);
+            create_token(number, value, &parsed_str->data[parsed_str->ip]);
             data->ip++;
-            token_ip++;
+            parsed_str->ip++;
 
         } else if (isalpha(CUR_CHAR) != 0) {
             char name[MAX_LEN_OF_NAME] = "";
@@ -84,9 +85,9 @@ void parse_str_lexically(buffer * data, table_of_names * table, token_data * TOK
 
             int number = put_name_in_table(table, table->len, name);
 
-            create_token(variable_type, 0, &TOKENS->data[token_ip]);
-            TOKENS->data[token_ip].number = number;
-            token_ip++;
+            create_token(variable_type, 0, &parsed_str->data[parsed_str->ip]);
+            parsed_str->data[parsed_str->ip].number = number;
+            parsed_str->ip++;
 
         } else {
             switch (CUR_CHAR) {
@@ -97,65 +98,75 @@ void parse_str_lexically(buffer * data, table_of_names * table, token_data * TOK
                 CASE_FOR_SYMBOL('=', equal);
                 CASE_FOR_SYMBOL('!', negation_type);
                 CASE_FOR_SYMBOL(';', semicolon);
-                CASE_FOR_SYMBOL('-', delimiter);
                 CASE_FOR_SYMBOL(',', comma);
                 CASE_FOR_SYMBOL('?', question);
+
+                case '-':                                            
+                    create_token(delimiter, 0, &parsed_str->data[parsed_str->ip]);    
+                    parsed_str->ip_delimiter = parsed_str->ip; 
+                    break;
+
                 default:
                     printf("not found symbol %d\n", CUR_CHAR);
             }
-            token_ip++;
+            parsed_str->ip++;
             data->ip++;
         }
     }
-    create_token(end, 0, &TOKENS->data[token_ip]);
-    token_ip++;
+    create_token(end, 0, &parsed_str->data[parsed_str->ip]);
+    parsed_str->ip++;
 
 }
 
 static void get_word(buffer * data, char * name) 
 {
-    int i = 0;
     for (int i = 0; ('a' <= CUR_CHAR && CUR_CHAR <= 'z') && (i <= MAX_LEN_OF_NAME); i++) {
         name[i] = CUR_CHAR;
         data->ip++;
     }
 }
 
-void get_variables(token_data * TOKENS, variables_data * variables) {
+void get_variables(token_data * parsed_str, variables_data * variables) 
+{
     variables->capacity = START_LEN_OF_DATA;
     variables->data = (variables_data_elem *) calloc(START_LEN_OF_DATA, sizeof(variables_data_elem));
 
-    int i = 0;
-    for (i = 0; TOKENS->data[i].type != delimiter; i++) {
+    for (int i = 0; parsed_str->data[i].type != delimiter; i++) {
+
         if (variables->len > variables->capacity) {
             variables->data = (variables_data_elem *) realloc(variables->data, variables->capacity * 2 * sizeof(variables_data_elem));
             variables->capacity *= 2;
         }
-        if (TOKENS->data[i].type == variable_type) {
+
+        if (parsed_str->data[i].type == variable_type) {
             i++; // cur char =
             i++; // number
-            variables->data[variables->len].value = TOKENS->data[i].value;
+            variables->data[variables->len].value = parsed_str->data[i].value;
             i++; // ;
             variables->len++;
         } else {
-            printf("token is not variable");
+            printf("token is not variable\n");
         }
     }
+
     for (int i = 0; i < variables->len; i++) {
         printf("%d\n", variables->data[i].value);
     }
-    TOKENS->ip_delimiter = i;
 }
 
-void write_rules(token_data * TOKENS) {
+void write_rules(token_data * parsed_str) 
+{
     FILE * pfile = fopen("rules.h", "w");
 
     fprintf(pfile, "if ");
+
     int number_of_rule = 1;
-    for (int i = TOKENS->ip_delimiter + 1; TOKENS->data[i].type != end; i++) {
-        switch (TOKENS->data[i].type) {
+    char message[100] = "";
+
+    for (int i = parsed_str->ip_delimiter + 1; parsed_str->data[i].type != end; i++) {
+        switch (parsed_str->data[i].type) {
             case variable_type:
-                fprintf(pfile, "variables->data[%zd].value", TOKENS->data[i].number);
+                fprintf(pfile, "variables->data[%zd].value", parsed_str->data[i].number);
                 break;
             case negation_type:
                 fprintf(pfile, "!");
@@ -178,10 +189,13 @@ void write_rules(token_data * TOKENS) {
                 break;         
 
             case semicolon:
-                fprintf(pfile, "\nis_change = 1;\nfprintf(report, \"the rule worked\");\n}\n");
-                if (TOKENS->data[i + 1].type != end) {
+                snprintf(message, 80, "the rule № %d worked\\n", number_of_rule);
+
+                fprintf(pfile, "\nis_change = 1;\nfprintf(report, \"%s\");\n}\n", message);
+                if (parsed_str->data[i + 1].type != end) {
                     fprintf(pfile,"if");
                 }
+                number_of_rule++;
                 break;  
 
             case comma:
@@ -197,14 +211,14 @@ void write_rules(token_data * TOKENS) {
                 break;          
 
             case number:
-                fprintf(pfile, "%d", TOKENS->data[i].value);
-                if (TOKENS->data[i + 1].type != comma) {
+                fprintf(pfile, "%d", parsed_str->data[i].value);
+                if (parsed_str->data[i + 1].type != comma) {
                     fprintf(pfile,";\n");
                 }
                 break;      
 
             default:
-                fprintf(pfile, "not fount in rules %d\n", TOKENS->data[i].type);
+                fprintf(pfile, "not fount in rules %d\n", parsed_str->data[i].type);
         }
 
     }
@@ -254,16 +268,29 @@ void dump_var(variables_data * variables, FILE * report, table_of_names * table)
     }
 }
 
+void save_var(bool * previous_var, variables_data * variables) {
+    for (int i = 0; i < variables->len; i++) {
+        previous_var[i] = variables->data[i].value;
+    }
+}
+
+void print_changes(bool * previous_var, variables_data * variables, FILE * report, table_of_names * table) {
+    for (int i = 0; i < variables->len; i++) {
+        fprintf(report, "%s: %d -> %d\n", table->names_of_var[i].name, previous_var[i], variables->data[i].value);
+    }
+}
+
 void engine(variables_data * variables, table_of_names * table) {
     bool is_change = 1;
     FILE * report = fopen("report.txt", "w");
+
+    bool * previous_var = (bool *) calloc(variables->len, sizeof(bool));
     while (is_change == 1) {
         is_change = 0;
-        fprintf(report, "then:\n");
-        dump_var(variables, report, table);
+        save_var(previous_var, variables);
         #include "../rules.h"
-        fprintf(report, "now:\n");
-        dump_var(variables, report, table);
+        print_changes(previous_var, variables, report, table);
+        fprintf(report,"\n------------------\n\n");
     }
     fclose(report);
 }
@@ -292,6 +319,4 @@ static int get_size_of_file(FILE * file) {
     fstat(fileno(file), &buff);
     return buff.st_size;
 }
-
-
 
