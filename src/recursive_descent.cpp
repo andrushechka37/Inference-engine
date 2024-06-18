@@ -1,6 +1,7 @@
-
 #include "../include/Inference_engine.h"
 #include <cstdio>
+
+bool disjunction(FILE * pfile, table_of_names * table, variables_data * variables);
 
 bool get_variable(FILE * pfile, table_of_names * table, variables_data * variables) {
     char var[MAX_LEN_OF_NAME] = "";
@@ -23,14 +24,26 @@ bool negation(FILE * pfile, table_of_names * table, variables_data * variables) 
     }
 }
 
-// a place for (((((((9)))))))
+bool bracket(FILE * pfile, table_of_names * table, variables_data * variables) {
+    if (getc(pfile) == '(') {
+        bool first = disjunction(pfile, table, variables);
+
+        if (getc(pfile) == '(') {
+            return first;
+        } else {
+            printf("bracket is not closed");
+            return first;
+        }
+    }
+    return negation(pfile, table, variables);
+}
 
 
 
 bool conjunction(FILE * pfile, table_of_names * table, variables_data * variables) {
-    bool first = negation(pfile, table, variables);
+    bool first = bracket(pfile, table, variables);
     while (getc(pfile) == '&') {
-        bool second = negation(pfile, table, variables);
+        bool second = bracket(pfile, table, variables);
         first = second && first;
     }
     int a = first;
