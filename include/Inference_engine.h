@@ -61,5 +61,9 @@ struct buffer {
     size_t len;
 };
 
-bool get_value(char * name, table_of_names * table, variables_data * variables);
-bool expression(FILE * pfile, table_of_names * table, variables_data * variables);
+
+void read_file_to_buffer(const char file[], buffer * data);
+void parse_str_lexically(buffer * data, table_of_names * table, token_data * parsed_str);
+void get_variables(token_data * parsed_str, variables_data * variables);
+void write_rules(token_data * parsed_str);
+void engine(variables_data * variables, table_of_names * table);

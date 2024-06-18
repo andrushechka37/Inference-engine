@@ -10,8 +10,8 @@
 // TODO: in table fixed len
 
 // добавить побольше дефайнов
-
-// include происходит раньше заполнения его
+// посмотреть еще раз либу, посмотреть мейны
+// перечитать ридми, проверить гайд
 
 static int get_size_of_file(FILE * file);
 static void get_word(buffer * data, char * name);
@@ -34,7 +34,7 @@ static int put_name_in_table(table_of_names * table, int number, char * name)
     return table->len - 1;
 }
 
-static void read_file_to_buffer(const char file[], buffer * data) 
+void read_file_to_buffer(const char file[], buffer * data) 
 {
     FILE * pfile = fopen(file, "r");
 
@@ -60,8 +60,8 @@ static void create_token(types_of_tokens type, bool value, token * token)
 
 #define CUR_CHAR data->buffer[data->ip]
 #define CUR_TOKEN (parsed_str->data[parsed_str->ip])
-#define CASE_FOR_SYMBOL(symbol, type)                       \
-    case symbol:                                            \
+#define CASE_FOR_SYMBOL(symbol, type)                             \
+    case symbol:                                                  \
     create_token(type, 0, &parsed_str->data[parsed_str->ip]);     \
     break;
 
@@ -271,7 +271,8 @@ static void print_changes(bool * previous_var, variables_data * variables, FILE 
     }
 }
 
-void engine(variables_data * variables, table_of_names * table) {
+void engine(variables_data * variables, table_of_names * table)
+{
     bool is_change = 1;
     FILE * report = fopen("report.txt", "w");
 
@@ -287,27 +288,7 @@ void engine(variables_data * variables, table_of_names * table) {
 }
 
 
-int main () 
-{
-    variables_data variables = {};
-    table_of_names table = {};
-    buffer data = {};
-    token_data TOKENS = {};
-    
-    read_file_to_buffer("input.txt", &data);
-    parse_str_lexically(&data, &table, &TOKENS);
-    dump_all_tokens(&TOKENS, &table);
-    get_variables(&TOKENS, &variables);
-    write_rules(&TOKENS);
 
-    engine(&variables, &table);
-
-
-
-    free(variables.data);           // may be put in dtor function
-    free((void *)data.buffer);
-    free(TOKENS.data);
-}
 
 
 static int get_size_of_file(FILE * file) {

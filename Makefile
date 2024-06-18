@@ -19,12 +19,26 @@ OBJ = ./obj/
 SRC = ./src/
 INCLUDE = ./include/
 
-.PHONY: compile
-compile: $(OBJ)Inference_engine.o 
-	$(CC) $(OBJ)Inference_engine.o $(CXXFLAGS) -o $(TARGET) && ./$(TARGET)
+rules: $(OBJ)Inference_engine.o $(OBJ)generate_rules.o
+	$(CC) $(OBJ)Inference_engine.o $(OBJ)generate_rules.o $(CXXFLAGS) -o $(TARGET) && ./$(TARGET)
 
 $(OBJ)Inference_engine.o: $(INCLUDE)Inference_engine.h $(SRC)Inference_engine.cpp
 	$(CC) -g -c $(SRC)Inference_engine.cpp -o $(OBJ)Inference_engine.o
 
+$(OBJ)generate_rules.o: $(INCLUDE)Inference_engine.h $(SRC)generate_rules.cpp
+	$(CC) -g -c $(SRC)generate_rules.cpp -o $(OBJ)generate_rules.o
+
+
+
+
+engine: $(OBJ)Inference_engine.o $(OBJ)engine.o
+	$(CC) $(OBJ)Inference_engine.o $(OBJ)engine.o $(CXXFLAGS) -o $(TARGET) && ./$(TARGET)
+
+$(OBJ)Inference_engine.o: $(INCLUDE)Inference_engine.h $(SRC)Inference_engine.cpp
+	$(CC) -g -c $(SRC)Inference_engine.cpp -o $(OBJ)Inference_engine.o
+
+$(OBJ)engine.o: $(INCLUDE)Inference_engine.h $(SRC)engine.cpp
+	$(CC) -g -c $(SRC)engine.cpp -o $(OBJ)engine.o
+
 clean:
-	rm -rf $(OBJ)*.o $(TARGET)
+	rm -rf $(OBJ)*.o $(TARGET) engine log.txt report.txt
