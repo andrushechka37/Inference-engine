@@ -3,7 +3,9 @@
 
 # Моя реализация машины вывода
 ## Как использовать?
-```git clone https://github.com/andrushechka37/Inference-engine.git```
+```
+git clone https://github.com/andrushechka37/Inference-engine.git
+```
 
 Записываем правила и факты в файл input.txt
 Пример:
