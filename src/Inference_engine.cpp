@@ -7,24 +7,21 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-// TOD: система ошибок
-// TODO: переименовать array и все вообще
-// проверка на input
-// в таблице имен фиксированное количество
-// опверка в get var
-// добавить дефайнов
-// freeeee
-// const d snpintf
+// TODO: in table fixed len
+
+// добавить побольше дефайнов
+
 // include происходит раньше заполнения его
+
 static int get_size_of_file(FILE * file);
 static void get_word(buffer * data, char * name);
 
-void var_elem_ctor(bool value, variables_data_elem * elem) 
+static void var_elem_ctor(bool value, variables_data_elem * elem) 
 {
     elem->value = value;
 }
 
-int put_name_in_table(table_of_names * table, int number, char * name) 
+static int put_name_in_table(table_of_names * table, int number, char * name) 
 {
     for (int i = 0; i < table->len; i++) {
         if (strcmp(name, table->names_of_var[i].name) == 0) {
@@ -37,9 +34,13 @@ int put_name_in_table(table_of_names * table, int number, char * name)
     return table->len - 1;
 }
 
-void read_file_to_buffer(const char file[], buffer * data) 
+static void read_file_to_buffer(const char file[], buffer * data) 
 {
     FILE * pfile = fopen(file, "r");
+
+    if (pfile == NULL) {
+        printf("no input.txt file found\n");
+    }
 
     data->len = get_size_of_file(pfile);
     data->buffer = (const char *) calloc(data->len, sizeof(char));
@@ -48,9 +49,9 @@ void read_file_to_buffer(const char file[], buffer * data)
     fclose(pfile);
 }
 
-void create_token(types_of_tokens type, bool value, token * token) 
+static void create_token(types_of_tokens type, bool value, token * token) 
 {
-    if (type == number) {
+    if (type == NUMBER_TYPE) {
         token->value = value;
     }
 
@@ -58,6 +59,7 @@ void create_token(types_of_tokens type, bool value, token * token)
 }
 
 #define CUR_CHAR data->buffer[data->ip]
+#define CUR_TOKEN (parsed_str->data[parsed_str->ip])
 #define CASE_FOR_SYMBOL(symbol, type)                       \
     case symbol:                                            \
     create_token(type, 0, &parsed_str->data[parsed_str->ip]);     \
@@ -75,7 +77,7 @@ void parse_str_lexically(buffer * data, table_of_names * table, token_data * par
 
         } else if (isdigit(CUR_CHAR) != 0) {
             bool value = CUR_CHAR - '0';
-            create_token(number, value, &parsed_str->data[parsed_str->ip]);
+            create_token(NUMBER_TYPE, value, &CUR_TOKEN);
             data->ip++;
             parsed_str->ip++;
 
@@ -85,24 +87,24 @@ void parse_str_lexically(buffer * data, table_of_names * table, token_data * par
 
             int number = put_name_in_table(table, table->len, name);
 
-            create_token(variable_type, 0, &parsed_str->data[parsed_str->ip]);
-            parsed_str->data[parsed_str->ip].number = number;
+            create_token(VARIABLE_TYPE, 0, &CUR_TOKEN);
+            CUR_TOKEN.number = number;
             parsed_str->ip++;
 
         } else {
             switch (CUR_CHAR) {
-                CASE_FOR_SYMBOL('(', bracket_type_o);
-                CASE_FOR_SYMBOL(')', bracket_type_c);
-                CASE_FOR_SYMBOL('&', conjunction_type);
-                CASE_FOR_SYMBOL('|', disjunction_type);
-                CASE_FOR_SYMBOL('=', equal);
-                CASE_FOR_SYMBOL('!', negation_type);
-                CASE_FOR_SYMBOL(';', semicolon);
-                CASE_FOR_SYMBOL(',', comma);
-                CASE_FOR_SYMBOL('?', question);
+                CASE_FOR_SYMBOL('(', BRACKET_O_TYPE);
+                CASE_FOR_SYMBOL(')', BRACKET_C_TYPE);
+                CASE_FOR_SYMBOL('&', CONJUNCTION_TYPE);
+                CASE_FOR_SYMBOL('|', DISJUNCTION_TYPE);
+                CASE_FOR_SYMBOL('=', EQUAL_TYPE);
+                CASE_FOR_SYMBOL('!', NEGATION_TYPE);
+                CASE_FOR_SYMBOL(';', SEMICOLON_TYPE);
+                CASE_FOR_SYMBOL(',', COMMA_TYPE);
+                CASE_FOR_SYMBOL('?', QUESTION_TYPE);
 
                 case '-':                                            
-                    create_token(delimiter, 0, &parsed_str->data[parsed_str->ip]);    
+                    create_token(DELIMITER_TYPE, 0, &CUR_TOKEN);    
                     parsed_str->ip_delimiter = parsed_str->ip; 
                     break;
 
@@ -113,7 +115,7 @@ void parse_str_lexically(buffer * data, table_of_names * table, token_data * par
             data->ip++;
         }
     }
-    create_token(end, 0, &parsed_str->data[parsed_str->ip]);
+    create_token(END_TYPE, 0, &CUR_TOKEN);
     parsed_str->ip++;
 
 }
@@ -126,23 +128,29 @@ static void get_word(buffer * data, char * name)
     }
 }
 
+#define CHECK_SYMBOL(typ)                     \
+    i++;                                      \
+    if (parsed_str->data[i].type != typ) {    \
+        printf("error in get var");           \
+    }                                        
+
 void get_variables(token_data * parsed_str, variables_data * variables) 
 {
     variables->capacity = START_LEN_OF_DATA;
     variables->data = (variables_data_elem *) calloc(START_LEN_OF_DATA, sizeof(variables_data_elem));
 
-    for (int i = 0; parsed_str->data[i].type != delimiter; i++) {
+    for (int i = 0; parsed_str->data[i].type != DELIMITER_TYPE; i++) {
 
         if (variables->len > variables->capacity) {
             variables->data = (variables_data_elem *) realloc(variables->data, variables->capacity * 2 * sizeof(variables_data_elem));
             variables->capacity *= 2;
         }
 
-        if (parsed_str->data[i].type == variable_type) {
-            i++; // cur char =
-            i++; // number
+        if (parsed_str->data[i].type == VARIABLE_TYPE) {
+            CHECK_SYMBOL(EQUAL_TYPE);
+            CHECK_SYMBOL(NUMBER_TYPE);
             variables->data[variables->len].value = parsed_str->data[i].value;
-            i++; // ;
+            CHECK_SYMBOL(SEMICOLON_TYPE);
             variables->len++;
         } else {
             printf("token is not variable\n");
@@ -154,6 +162,11 @@ void get_variables(token_data * parsed_str, variables_data * variables)
     }
 }
 
+#define PRINT_SYMBOL(typ, symbol)   \
+    case typ:                       \
+        fprintf(pfile, symbol);     \
+        break;
+
 void write_rules(token_data * parsed_str) 
 {
     FILE * pfile = fopen("rules.h", "w");
@@ -161,58 +174,36 @@ void write_rules(token_data * parsed_str)
     fprintf(pfile, "if ");
 
     int number_of_rule = 1;
-    char message[100] = "";
+    char message[LEN_OF_MESSAGE] = "";
 
-    for (int i = parsed_str->ip_delimiter + 1; parsed_str->data[i].type != end; i++) {
+    for (int i = parsed_str->ip_delimiter + 1; parsed_str->data[i].type != END_TYPE; i++) {
         switch (parsed_str->data[i].type) {
-            case variable_type:
+            case VARIABLE_TYPE:
                 fprintf(pfile, "variables->data[%zd].value", parsed_str->data[i].number);
                 break;
-            case negation_type:
-                fprintf(pfile, "!");
-                break;
 
-            case conjunction_type:
-                fprintf(pfile, " && ");
-                break;
-            
-            case disjunction_type:
-                fprintf(pfile, " || ");
-                break;     
+            PRINT_SYMBOL(NEGATION_TYPE, "!");
+            PRINT_SYMBOL(CONJUNCTION_TYPE, " && ");
+            PRINT_SYMBOL(DISJUNCTION_TYPE, " || ");
+            PRINT_SYMBOL(BRACKET_C_TYPE, ")");
+            PRINT_SYMBOL(BRACKET_O_TYPE, "(");
+            PRINT_SYMBOL(COMMA_TYPE, ";\n");
+            PRINT_SYMBOL(QUESTION_TYPE, " {\n");
+            PRINT_SYMBOL(EQUAL_TYPE, " = ");
 
-            case bracket_type_c:
-                fprintf(pfile, ")");
-                break;  
-
-            case bracket_type_o:
-                fprintf(pfile, "(");
-                break;         
-
-            case semicolon:
-                snprintf(message, 80, "the rule № %d worked\\n", number_of_rule);
+            case SEMICOLON_TYPE:
+                snprintf(message, LEN_OF_MESSAGE - 1, "the rule № %d worked\\n", number_of_rule);
 
                 fprintf(pfile, "\nis_change = 1;\nfprintf(report, \"%s\");\n}\n", message);
-                if (parsed_str->data[i + 1].type != end) {
+                if (parsed_str->data[i + 1].type != END_TYPE) {
                     fprintf(pfile,"if");
                 }
                 number_of_rule++;
                 break;  
 
-            case comma:
-                fprintf(pfile, ";\n");
-                break;  
-
-            case question:
-                fprintf(pfile, " {\n");
-                break; 
-
-            case equal:
-                fprintf(pfile, " = ");
-                break;          
-
-            case number:
+            case NUMBER_TYPE:
                 fprintf(pfile, "%d", parsed_str->data[i].value);
-                if (parsed_str->data[i + 1].type != comma) {
+                if (parsed_str->data[i + 1].type != COMMA_TYPE) {
                     fprintf(pfile,";\n");
                 }
                 break;      
@@ -232,28 +223,28 @@ void write_rules(token_data * parsed_str)
     break;
 
 
-void dump_all_tokens(token_data * TOKENS, table_of_names * table) {
+static void dump_all_tokens(token_data * TOKENS, table_of_names * table) {
     int i = 0;
     FILE * log = fopen("log.txt", "w");
-    while (TOKENS->data[i].type != end) {
+    while (TOKENS->data[i].type != END_TYPE) {
         switch (TOKENS->data[i].type) {
-            TYPES_FOR_LOG(negation_type, "negation\n");
-            TYPES_FOR_LOG(conjunction_type, "conjunction_type\n");
-            TYPES_FOR_LOG(disjunction_type, "disjunction_type\n");
-            TYPES_FOR_LOG(bracket_type_c, ")\n");
-            TYPES_FOR_LOG(equal, "=\n");
-            TYPES_FOR_LOG(semicolon, ";\n");
-            TYPES_FOR_LOG(delimiter, "delimiter\n");
-            TYPES_FOR_LOG(end, "end\n");
-            TYPES_FOR_LOG(bracket_type_o, "(\n");
-            TYPES_FOR_LOG(question, "?\n");
-            TYPES_FOR_LOG(comma, "comma\n");
+            TYPES_FOR_LOG(NEGATION_TYPE, "negation\n");
+            TYPES_FOR_LOG(CONJUNCTION_TYPE, "conjunction_type\n");
+            TYPES_FOR_LOG(DISJUNCTION_TYPE, "disjunction_type\n");
+            TYPES_FOR_LOG(BRACKET_C_TYPE, ")\n");
+            TYPES_FOR_LOG(EQUAL_TYPE, "=\n");
+            TYPES_FOR_LOG(SEMICOLON_TYPE, ";\n");
+            TYPES_FOR_LOG(DELIMITER_TYPE, "delimiter\n");
+            TYPES_FOR_LOG(END_TYPE, "end\n");
+            TYPES_FOR_LOG(BRACKET_O_TYPE, "(\n");
+            TYPES_FOR_LOG(QUESTION_TYPE, "?\n");
+            TYPES_FOR_LOG(COMMA_TYPE, "comma\n");
 
-            case variable_type:
+            case VARIABLE_TYPE:
                 fprintf(log, "var %s, number: %zd\n", table->names_of_var[TOKENS->data[i].number].name, TOKENS->data[i].number);
                 break;
             
-            case number:
+            case NUMBER_TYPE:
                 fprintf(log, "number %d\n", TOKENS->data[i].value);
                 break;
         }
@@ -262,19 +253,19 @@ void dump_all_tokens(token_data * TOKENS, table_of_names * table) {
     fclose(log);
 }
 
-void dump_var(variables_data * variables, FILE * report, table_of_names * table) {
+static void dump_var(variables_data * variables, FILE * report, table_of_names * table) {
     for (int i = 0; i < variables->len; i++) {
         fprintf(report, "%s = %d\n", table->names_of_var[i].name, variables->data[i].value);
     }
 }
 
-void save_var(bool * previous_var, variables_data * variables) {
+static void save_var(bool * previous_var, variables_data * variables) {
     for (int i = 0; i < variables->len; i++) {
         previous_var[i] = variables->data[i].value;
     }
 }
 
-void print_changes(bool * previous_var, variables_data * variables, FILE * report, table_of_names * table) {
+static void print_changes(bool * previous_var, variables_data * variables, FILE * report, table_of_names * table) {
     for (int i = 0; i < variables->len; i++) {
         fprintf(report, "%s: %d -> %d\n", table->names_of_var[i].name, previous_var[i], variables->data[i].value);
     }
@@ -295,6 +286,7 @@ void engine(variables_data * variables, table_of_names * table) {
     fclose(report);
 }
 
+
 int main () 
 {
     variables_data variables = {};
@@ -310,6 +302,11 @@ int main ()
 
     engine(&variables, &table);
 
+
+
+    free(variables.data);           // may be put in dtor function
+    free((void *)data.buffer);
+    free(TOKENS.data);
 }
 
 

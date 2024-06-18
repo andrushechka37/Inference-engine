@@ -1,9 +1,10 @@
 #include <cstddef>
 #include <cstdio>
 
-const int MAX_VARIABLES = 10;
-const int MAX_LEN_OF_NAME = 10;
-const int START_LEN_OF_DATA = 10;
+const int MAX_VARIABLES = 20;
+const int MAX_LEN_OF_NAME = 20;
+const int START_LEN_OF_DATA = 20;
+const int LEN_OF_MESSAGE = 100;
 
 struct variables_data_elem {
     bool value;
@@ -26,21 +27,20 @@ struct table_of_names {
     size_t capacity;
 };
 
-enum types_of_tokens { // to caps with one style
-    variable_type      = 1,
-    negation_type      = 2, 
-    conjunction_type   = 3,
-    disjunction_type   = 4,
-    bracket_type_c      = 5,
-    equal              = 6,
-    semicolon          = 7,
-    number             = 8,
-    delimiter          = 9,
-    end                = 10,
-    bracket_type_o     = 11,
-    question           = 12,
-    comma              = 13
-
+enum types_of_tokens {
+    VARIABLE_TYPE      =  1,
+    NEGATION_TYPE      =  2, 
+    CONJUNCTION_TYPE   =  3,
+    DISJUNCTION_TYPE   =  4,
+    BRACKET_C_TYPE     =  5,
+    EQUAL_TYPE         =  6,
+    SEMICOLON_TYPE     =  7,
+    NUMBER_TYPE        =  8,
+    DELIMITER_TYPE     =  9,
+    END_TYPE           = 10,
+    BRACKET_O_TYPE     = 11,
+    QUESTION_TYPE      = 12,
+    COMMA_TYPE         = 13,
 };
 
 struct token {
