@@ -6,6 +6,9 @@
 ```
 git clone https://github.com/andrushechka37/Inference-engine.git
 ```
+```
+mkdir obj
+```
 
 Записываем правила и факты в файл input.txt.
 
