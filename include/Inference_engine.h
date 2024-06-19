@@ -5,6 +5,7 @@ const int MAX_VARIABLES = 20;
 const int MAX_LEN_OF_NAME = 20;
 const int START_LEN_OF_DATA = 20;
 const int LEN_OF_MESSAGE = 100;
+const int MAX_ITERATIONS = 10;
 
 struct variables_data_elem {
     bool value;

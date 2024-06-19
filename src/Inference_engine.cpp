@@ -9,8 +9,6 @@
 
 // TODO: in table fixed len
 
-// добавить побольше дефайнов посмотреть еще раз либу, посмотреть мейны
-
 static int get_size_of_file(FILE * file);
 static void get_word(buffer * data, char * name);
 
@@ -275,7 +273,13 @@ void engine(variables_data * variables, table_of_names * table)
     FILE * report = fopen("report.txt", "w");
 
     bool * previous_var = (bool *) calloc(variables->len, sizeof(bool));
-    while (is_change == 1) {
+    for (int i = 0; is_change == 1 ; i++) {
+
+        if ( i >= MAX_ITERATIONS) {
+            fprintf(report, "\nIteration limit exceeded: %d\n", MAX_ITERATIONS);
+            break;
+        }
+
         is_change = 0;
         save_var(previous_var, variables);
         #include "../include/rules.h"

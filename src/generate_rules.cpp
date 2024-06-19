@@ -1,4 +1,5 @@
 #include "../include/Inference_engine.h"
+#include <cstdlib>
 
 
 
@@ -11,6 +12,7 @@ int main() {
     parse_str_lexically(&data, &table, &TOKENS);
 
     write_rules(&TOKENS);
-}
 
-// g++ -g -c src/generate_rules.cpp -o generate_rules.o && g++ generate_rules.o -o rules && ./rules
+    free((void *)data.buffer);
+    free(TOKENS.data);
+}

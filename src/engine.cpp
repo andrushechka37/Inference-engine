@@ -10,13 +10,12 @@ int main ()
     
     read_file_to_buffer("input.txt", &data);
     parse_str_lexically(&data, &table, &TOKENS);
-    // dump_all_tokens(&TOKENS, &table);
+
     get_variables(&TOKENS, &variables);
+
     write_rules(&TOKENS);
 
     engine(&variables, &table);
-
-
 
     free(variables.data);           // may be put in dtor function
     free((void *)data.buffer);
