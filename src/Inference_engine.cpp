@@ -9,9 +9,7 @@
 
 // TODO: in table fixed len
 
-// добавить побольше дефайнов
-// посмотреть еще раз либу, посмотреть мейны
-// проверить гайд + вопросы
+// добавить побольше дефайнов посмотреть еще раз либу, посмотреть мейны
 
 static int get_size_of_file(FILE * file);
 static void get_word(buffer * data, char * name);
