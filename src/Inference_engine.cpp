@@ -11,8 +11,7 @@
 
 // добавить побольше дефайнов
 // посмотреть еще раз либу, посмотреть мейны
-// перечитать ридми, проверить гайд + вопросы
-// фигня с rules папка
+// проверить гайд + вопросы
 
 static int get_size_of_file(FILE * file);
 static void get_word(buffer * data, char * name);
@@ -170,7 +169,7 @@ void get_variables(token_data * parsed_str, variables_data * variables)
 
 void write_rules(token_data * parsed_str) 
 {
-    FILE * pfile = fopen("rules.h", "w");
+    FILE * pfile = fopen("include/rules.h", "w");
 
     fprintf(pfile, "if ");
 
@@ -281,7 +280,7 @@ void engine(variables_data * variables, table_of_names * table)
     while (is_change == 1) {
         is_change = 0;
         save_var(previous_var, variables);
-        #include "../rules.h"
+        #include "../include/rules.h"
         print_changes(previous_var, variables, report, table);
         fprintf(report,"\n------------------\n\n");
     }
