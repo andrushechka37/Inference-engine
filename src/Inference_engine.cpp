@@ -64,7 +64,6 @@ static void create_token(types_of_tokens type, bool value, token * token)
 void parse_str_lexically(buffer * data, table_of_names * table, token_data * parsed_str) 
 {
     parsed_str->data = (token *) calloc(data->len, sizeof(token));
-
     while (data->ip < data->len) {
 
         if (isspace(CUR_CHAR) != 0) {
@@ -113,8 +112,9 @@ void parse_str_lexically(buffer * data, table_of_names * table, token_data * par
     }
     create_token(END_TYPE, 0, &CUR_TOKEN);
     parsed_str->ip++;
-
 }
+#undef CUR_TOKEN
+#undef CASE_FOR_SYMBOL
 
 static void get_word(buffer * data, char * name) 
 {
@@ -123,6 +123,7 @@ static void get_word(buffer * data, char * name)
         data->ip++;
     }
 }
+#undef CUR_CHAR
 
 #define CHECK_SYMBOL(typ)                     \
     i++;                                      \
@@ -130,39 +131,49 @@ static void get_word(buffer * data, char * name)
         printf("error in get var");           \
     }                                        
 
+#define CAPACITY (variables->capacity)
+#define DATA (variables->data)
+#define LEN (variables->len)
 void get_variables(token_data * parsed_str, variables_data * variables) 
 {
-    variables->capacity = START_LEN_OF_DATA;
-    variables->data = (variables_data_elem *) calloc(START_LEN_OF_DATA, sizeof(variables_data_elem));
+    CAPACITY = START_LEN_OF_DATA;
+    DATA = (variables_data_elem *) calloc(START_LEN_OF_DATA, sizeof(variables_data_elem));
 
     for (int i = 0; parsed_str->data[i].type != DELIMITER_TYPE; i++) {
 
-        if (variables->len > variables->capacity) {
-            variables->data = (variables_data_elem *) realloc(variables->data, variables->capacity * 2 * sizeof(variables_data_elem));
-            variables->capacity *= 2;
+        if (LEN > CAPACITY) {
+            DATA = (variables_data_elem *) realloc(DATA, CAPACITY * 2 * sizeof(variables_data_elem));
+            CAPACITY *= 2;
         }
 
         if (parsed_str->data[i].type == VARIABLE_TYPE) {
             CHECK_SYMBOL(EQUAL_TYPE);
             CHECK_SYMBOL(NUMBER_TYPE);
-            variables->data[variables->len].value = parsed_str->data[i].value;
+
+            DATA[LEN].value = parsed_str->data[i].value;
+
             CHECK_SYMBOL(SEMICOLON_TYPE);
-            variables->len++;
+            LEN++;
         } else {
             printf("token is not variable\n");
         }
     }
 
-    for (int i = 0; i < variables->len; i++) {
-        printf("%d\n", variables->data[i].value);
+    for (int i = 0; i < LEN; i++) {
+        printf("%d\n", DATA[i].value);
     }
 }
+#undef CAPACITY
+#undef DATA
+#undef LEN
+#undef CHECK_SYMBOL
 
 #define PRINT_SYMBOL(typ, symbol)   \
     case typ:                       \
         fprintf(pfile, symbol);     \
         break;
 
+#define ELEM (parsed_str->data[i])
 void write_rules(token_data * parsed_str) 
 {
     FILE * pfile = fopen("include/rules.h", "w");
@@ -172,10 +183,10 @@ void write_rules(token_data * parsed_str)
     int number_of_rule = 1;
     char message[LEN_OF_MESSAGE] = "";
 
-    for (int i = parsed_str->ip_delimiter + 1; parsed_str->data[i].type != END_TYPE; i++) {
-        switch (parsed_str->data[i].type) {
+    for (int i = parsed_str->ip_delimiter + 1; ELEM.type != END_TYPE; i++) {
+        switch (ELEM.type) {
             case VARIABLE_TYPE:
-                fprintf(pfile, "variables->data[%zd].value", parsed_str->data[i].number);
+                fprintf(pfile, "variables->data[%zd].value", ELEM.number);
                 break;
 
             PRINT_SYMBOL(NEGATION_TYPE, "!");
@@ -198,20 +209,20 @@ void write_rules(token_data * parsed_str)
                 break;  
 
             case NUMBER_TYPE:
-                fprintf(pfile, "%d", parsed_str->data[i].value);
+                fprintf(pfile, "%d", ELEM.value);
                 if (parsed_str->data[i + 1].type != COMMA_TYPE) {
                     fprintf(pfile,";\n");
                 }
                 break;      
 
             default:
-                fprintf(pfile, "not fount in rules %d\n", parsed_str->data[i].type);
+                fprintf(pfile, "not fount in rules %d\n", ELEM.type);
         }
-
     }
     fclose(pfile);
-
 }
+#undef PRINT_SYMBOL
+#undef ELEM
 
 #define TYPES_FOR_LOG(type, text)     \
     case type:                        \
@@ -219,7 +230,8 @@ void write_rules(token_data * parsed_str)
     break;
 
 
-static void dump_all_tokens(token_data * TOKENS, table_of_names * table) {
+static void dump_all_tokens(token_data * TOKENS, table_of_names * table) 
+{
     int i = 0;
     FILE * log = fopen("log.txt", "w");
     while (TOKENS->data[i].type != END_TYPE) {
@@ -248,20 +260,24 @@ static void dump_all_tokens(token_data * TOKENS, table_of_names * table) {
     }
     fclose(log);
 }
+#undef TYPES_FOR_LOG
 
-static void dump_var(variables_data * variables, FILE * report, table_of_names * table) {
+static void dump_var(variables_data * variables, FILE * report, table_of_names * table) 
+{
     for (int i = 0; i < variables->len; i++) {
         fprintf(report, "%s = %d\n", table->names_of_var[i].name, variables->data[i].value);
     }
 }
 
-static void save_var(bool * previous_var, variables_data * variables) {
+static void save_var(bool * previous_var, variables_data * variables) 
+{
     for (int i = 0; i < variables->len; i++) {
         previous_var[i] = variables->data[i].value;
     }
 }
 
-static void print_changes(bool * previous_var, variables_data * variables, FILE * report, table_of_names * table) {
+static void print_changes(bool * previous_var, variables_data * variables, FILE * report, table_of_names * table) 
+{
     for (int i = 0; i < variables->len; i++) {
         fprintf(report, "%s: %d -> %d\n", table->names_of_var[i].name, previous_var[i], variables->data[i].value);
     }
@@ -282,7 +298,9 @@ void engine(variables_data * variables, table_of_names * table)
 
         is_change = 0;
         save_var(previous_var, variables);
+
         #include "../include/rules.h"
+
         print_changes(previous_var, variables, report, table);
         fprintf(report,"\n------------------\n\n");
     }
@@ -293,8 +311,8 @@ void engine(variables_data * variables, table_of_names * table)
 
 
 
-static int get_size_of_file(FILE * file) {
-
+static int get_size_of_file(FILE * file) 
+{
     struct stat buff;
     fstat(fileno(file), &buff);
     return buff.st_size;
